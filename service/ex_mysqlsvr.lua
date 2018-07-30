@@ -5,7 +5,7 @@
 local skynet = require 'skynet'
 local mysql = require "mysql"
 local cjson = require "cjson"
-local ddlog = require "ddlog"
+local ex_log = require "ex_log"
 
 local NO_ERR = nil
 
@@ -255,7 +255,7 @@ function CMD.select(tname, fields, where, limit)
     local sql_s = table.concat(sql, " ")
     local res = _db:query(sql_s)
     if res.err then
-        return res.err, ddlog.error("sql err:", res.err, sql_s)
+        return res.err, ex_log.error("sql err:", res.err, sql_s)
     end
     return NO_ERR, res
 end
@@ -287,7 +287,7 @@ function CMD.select2(tname, fields, where, limit)
     local sql_s = table.concat(sql, " ")
     local res = _db:query(sql_s)
     if res.err then
-        return res.err, ddlog.error("sql err:", res.err, sql_s)
+        return res.err, ex_log.error("sql err:", res.err, sql_s)
     end
     return NO_ERR, res
 end
@@ -308,7 +308,7 @@ function CMD.select_count(tname, where)
     local sql_s = table.concat(sql, " ")
     local res = _db:query(sql_s)
     if res.err then
-        return res.err, ddlog.error("sql err:", res.err, sql_s)
+        return res.err, ex_log.error("sql err:", res.err, sql_s)
     end
     return NO_ERR, res[1]["count(*)"]
 end
@@ -331,7 +331,7 @@ function CMD.select_count2(tname, where)
     local sql_s = table.concat(sql, " ")
     local res = _db:query(sql_s)
     if res.err then
-        return res.err, ddlog.error("sql err:", res.err, sql_s)
+        return res.err, ex_log.error("sql err:", res.err, sql_s)
     end
     return NO_ERR, res[1]["count(*)"]
 end
@@ -357,7 +357,7 @@ function CMD.insert(tname, data, exc)
     local sql = table.concat(t, " ")
     local res = _db:query(sql)
     if res.err then
-        return res.err, ddlog.error("sql err:", res.err, sql)
+        return res.err, ex_log.error("sql err:", res.err, sql)
     end
     return NO_ERR, res
 end
@@ -382,7 +382,7 @@ function CMD.replace(tname, data, exc)
     local sql = table.concat(t, " ")
     local res = _db:query(sql)
     if res.err then
-        return res.err, ddlog.error("sql err:", res.err, sql)
+        return res.err, ex_log.error("sql err:", res.err, sql)
     end
     return NO_ERR, res
 end
@@ -411,7 +411,7 @@ function CMD.update(tname, fields, where)
     local sql_s = table.concat(sql, " ")
     local res = _db:query(sql_s)
     if res.err then
-        return res.err, ddlog.error("sql err:", res.err, sql_s)
+        return res.err, ex_log.error("sql err:", res.err, sql_s)
     end
     return NO_ERR, res
 end
@@ -432,7 +432,7 @@ function CMD.delete(tname, where)
     local sql_s = table.concat(sql, " ")
     local res = _db:query(sql_s)
     if res.err then
-        return res.err, ddlog.error("sql err:", res.err, sql_s)
+        return res.err, ex_log.error("sql err:", res.err, sql_s)
     end
     return NO_ERR, res
 end
