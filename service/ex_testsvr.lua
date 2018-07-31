@@ -1,6 +1,9 @@
 local skynet = require "skynet"
 require "skynet.manager"
 
+local protobuf = require "protobuf"
+local skiplist = require "skiplist"
+
 local CMD = {}
 
 skynet.start(function ()

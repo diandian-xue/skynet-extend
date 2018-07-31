@@ -3,7 +3,7 @@
 -- date:2017/6/15
 
 local skynet = require 'skynet'
-local mysql = require "mysql"
+local mysql = require "skynet.db.mysql"
 local cjson = require "cjson"
 local ex_log = require "ex_log"
 

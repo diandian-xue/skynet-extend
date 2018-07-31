@@ -32,7 +32,6 @@ luaservice = concat_ddpath {
 
 lua_path = concat_ddpath {
   "skynet/lualib/?.lua",
-  "skynet/lualib/compat10/?.lua",
   "lualib/?.lua",
   "service/?.lua",
 }

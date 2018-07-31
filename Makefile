@@ -9,6 +9,7 @@ all: log luaclib cservice \
 	skynet/skynet \
 	luaclib/cjson.so \
 	luaclib/skiplist.so \
+	luaclib/protobuf.so \
 	cservice/ex_loggersvr.so\
 
 
@@ -24,20 +25,30 @@ log:: log/
 	-mkdir log
 log/::
 
-luaclib/cjson.so::luaclib-src/lua-cjson/*.c
-	cd luaclib-src/lua-cjson && $(MAKE)
-	mv luaclib-src/lua-cjson/cjson.so luaclib/
-
-luaclib/skiplist.so:: luaclib-src/skiplist/lua-skiplist.c luaclib-src/skiplist/skiplist.c
-	$(CC)  $(CFLAGS)  $(INCLUDE) -DLUA_COMPAT_5_2 $^ -o $@
-
-cservice/ex_loggersvr.so: cservice-src/ex_loggersvr/ex_loggersvr.c
-	$(CC)  $(CFLAGS)  -I$(INCLUDE) $^ -o $@
 
 skynet/skynet:: skynet/Makefile skynet/lualib-src/* skynet/service-src/* skynet/skynet-src/*
 	cd skynet && $(MAKE) linux -j8
 
+luaclib/cjson.so::luaclib-src/lua-cjson/*.c
+	cd luaclib-src/lua-cjson && $(MAKE)
+	cp luaclib-src/lua-cjson/cjson.so luaclib/
+
+luaclib/skiplist.so:: luaclib-src/skiplist/lua-skiplist.c luaclib-src/skiplist/skiplist.c
+	$(CC)  $(CFLAGS)  $(INCLUDE) -DLUA_COMPAT_5_2 $^ -o $@
+	
+luaclib/protobuf.so:: luaclib-src/pbc/src/* luaclib-src/pbc/tool/* luaclib-src/pbc/binding/lua53/*
+	cd luaclib-src/pbc/ && $(MAKE)
+	cd luaclib-src/pbc/binding/lua53/ && $(MAKE)
+	cp luaclib-src/pbc/binding/lua53/protobuf.so luaclib/
+	cp -r luaclib-src/pbc/binding/lua53/protobuf.lua lualib/
+
+cservice/ex_loggersvr.so: cservice-src/ex_loggersvr/ex_loggersvr.c
+	$(CC)  $(CFLAGS)  -I$(INCLUDE) $^ -o $@
+
+
 clean:
 	rm -rf luaclib/
 	rm -rf cservice/
-	cd skynet/ && make clean
+	cd skynet/ && $(MAKE) clean
+	cd luaclib-src/pbc/ && $(MAKE) clean
+	cd luaclib-src/pbc/binding/lua53/ && $(MAKE)
