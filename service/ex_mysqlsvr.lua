@@ -239,34 +239,6 @@ function CMD.select(tname, fields, where, limit)
         "FROM",
         "`" .. tname .. "`",
     }
-    if where and next(where) then
-        table.insert(sql, "WHERE")
-        local w = {}
-        for k, v in pairs(where) do
-            table.insert(w, string.format("%s \"%s\"", k, tostring(v)))
-        end
-        table.insert(sql, table.concat(w, " and "))
-    end
-
-    if limit and next(limit) then
-        table.insert(sql, "LIMIT")
-        table.insert(sql, table.concat(limit, ","))
-    end
-    local sql_s = table.concat(sql, " ")
-    local res = _db:query(sql_s)
-    if res.err then
-        return res.err, ex_log.error("sql err:", res.err, sql_s)
-    end
-    return NO_ERR, res
-end
-
-function CMD.select2(tname, fields, where, limit)
-    local sql = {
-        "SELECT",
-        table.concat(fields, ","),
-        "FROM",
-        "`" .. tname .. "`",
-    }
 
     if where and next(where) then
         table.insert(sql, "WHERE")
@@ -293,27 +265,6 @@ function CMD.select2(tname, fields, where, limit)
 end
 
 function CMD.select_count(tname, where)
-    local sql = {
-        "SELECT count(*) FROM",
-        string.format("`%s`", tname),
-    }
-     if where and next(where) then
-        table.insert(sql, "WHERE")
-        local w = {}
-        for k, v in pairs(where) do
-            table.insert(w, string.format("%s \"%s\"", k, tostring(v)))
-        end
-        table.insert(sql, table.concat(w, " and "))
-    end
-    local sql_s = table.concat(sql, " ")
-    local res = _db:query(sql_s)
-    if res.err then
-        return res.err, ex_log.error("sql err:", res.err, sql_s)
-    end
-    return NO_ERR, res[1]["count(*)"]
-end
-
-function CMD.select_count2(tname, where)
     local sql = {
         "SELECT count(*) FROM",
         string.format("`%s`", tname),
