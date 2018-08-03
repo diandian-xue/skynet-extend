@@ -217,10 +217,12 @@ function CMD.check_tables(registers)
         assert(not err, err)
     end
 
+    --[[ not delete table
     for k, v in pairs(deletes) do
         local err, res = CMD.drop_table(k)
         assert(not err, err)
     end
+    --]]
 
     for k, v in pairs(executes) do
         check_fields(k, v.fields)
@@ -259,7 +261,7 @@ function CMD.select(tname, fields, where, limit)
     local sql_s = table.concat(sql, " ")
     local res = _db:query(sql_s)
     if res.err then
-        return res.err, ex_log.error("sql err:", res.err, sql_s)
+        return res.err .. sql_s, ex_log.error("sql err:", res.err, sql_s)
     end
     return NO_ERR, res
 end
@@ -282,7 +284,7 @@ function CMD.select_count(tname, where)
     local sql_s = table.concat(sql, " ")
     local res = _db:query(sql_s)
     if res.err then
-        return res.err, ex_log.error("sql err:", res.err, sql_s)
+        return res.err .. sql_s, ex_log.error("sql err:", res.err, sql_s)
     end
     return NO_ERR, res[1]["count(*)"]
 end
@@ -308,7 +310,7 @@ function CMD.insert(tname, data, exc)
     local sql = table.concat(t, " ")
     local res = _db:query(sql)
     if res.err then
-        return res.err, ex_log.error("sql err:", res.err, sql)
+        return res.err .. sql, ex_log.error("sql err:", res.err, sql)
     end
     return NO_ERR, res
 end
@@ -333,15 +335,15 @@ function CMD.replace(tname, data, exc)
     local sql = table.concat(t, " ")
     local res = _db:query(sql)
     if res.err then
-        return res.err, ex_log.error("sql err:", res.err, sql)
+        return res.err .. sql, ex_log.error("sql err:", res.err, sql)
     end
     return NO_ERR, res
 end
 
-function CMD.update(tname, fields, where)
+function CMD.update(tname, fields, where, exc)
     local values = {}
     for k, v in pairs(fields) do
-        table.insert(values, string.format("%s=\"%s\"", k, tostring(v)))
+        table.insert(values, string.format("%s=%s", k, tostring(v)))
     end    
 
     local sql = {
@@ -353,16 +355,21 @@ function CMD.update(tname, fields, where)
 
     if where and next(where) then
         table.insert(sql, "WHERE")
-        local w = {}
-        for k, v in pairs(where) do
-            table.insert(w, string.format("%s \"%s\"", k, tostring(v)))
+        for _, v in ipairs(where) do
+            if type(v) == "table" then
+                table.insert(sql, string.format("%s\"%s\"", v[1], tostring(v[2])))
+            else
+                table.insert(sql, tostring(v))
+            end
         end
-        table.insert(sql, table.concat(w, " and "))
+    end
+    if exc then
+        table.insert(sql, exc)
     end
     local sql_s = table.concat(sql, " ")
     local res = _db:query(sql_s)
     if res.err then
-        return res.err, ex_log.error("sql err:", res.err, sql_s)
+        return res.err .. sql_s, ex_log.error("sql err:", res.err, sql_s)
     end
     return NO_ERR, res
 end
