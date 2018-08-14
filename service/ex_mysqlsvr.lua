@@ -14,6 +14,12 @@ local _dbname
 
 local CMD = {}
 
+
+local TS = tostring
+local function QS(v)
+    return mysql.quote_sql_str(TS(v))
+end
+
 function CMD.get(tname, key)
     local query = string.format("SELECT * FROM `%s` WHERE `key` = '%s';", tname, key)
     local res = _db:query(query)
@@ -100,9 +106,9 @@ function CMD.create_table(name, fields, prikey, comment)
         table.insert(sql, string.format("PRIMARY KEY (`%s`)", prikey))
     end
     table.insert(sql, string.format(") COMMENT \"%s\";", comment or ""))
-    local sql_str = table.concat(sql, "\n")
-    skynet.error("create table:\n", sql_str)
-    local res = _db:query(sql_str)
+    local sqltr = table.concat(sql, "\n")
+    skynet.error("create table:\n", sqltr)
+    local res = _db:query(sqltr)
     if res.err then
         return res.err
     end
@@ -231,7 +237,11 @@ function CMD.check_tables(registers)
 end
 
 function CMD.query(sql)
-    return _db:query(sql)
+    local res = _db:query(sql)
+    if res.err then
+        return res.err .. sql, ex_log.error("sql err:", res.err, sql)
+    end
+    return NO_ERR, res
 end
 
 function CMD.select(tname, fields, where, limit)
@@ -246,9 +256,9 @@ function CMD.select(tname, fields, where, limit)
         table.insert(sql, "WHERE")
         for _, v in ipairs(where) do
             if type(v) == "table" then
-                table.insert(sql, string.format("%s\"%s\"", v[1], tostring(v[2])))
+                table.insert(sql, string.format("%s%s", TS(v[1]), QS(v[2])))
             else
-                table.insert(sql, tostring(v))
+                table.insert(sql, TS(v))
             end
         end
     end
@@ -258,10 +268,10 @@ function CMD.select(tname, fields, where, limit)
         table.insert(sql, table.concat(limit, ","))
     end
 
-    local sql_s = table.concat(sql, " ")
-    local res = _db:query(sql_s)
+    local sql = table.concat(sql, " ")
+    local res = _db:query(sql)
     if res.err then
-        return res.err .. sql_s, ex_log.error("sql err:", res.err, sql_s)
+        return res.err .. sql, ex_log.error("sql err:", res.err, sql)
     end
     return NO_ERR, res
 end
@@ -275,16 +285,16 @@ function CMD.select_count(tname, where)
         table.insert(sql, "WHERE")
         for _, v in ipairs(where) do
             if type(v) == "table" then
-                table.insert(sql, string.format("%s\"%s\"", v[1], tostring(v[2])))
+                table.insert(sql, string.format("%s%s", TS(v[1]), QS(v[2])))
             else
-                table.insert(sql, tostring(v))
+                table.insert(sql, TS(v))
             end
         end
     end
-    local sql_s = table.concat(sql, " ")
-    local res = _db:query(sql_s)
+    local sql = table.concat(sql, " ")
+    local res = _db:query(sql)
     if res.err then
-        return res.err .. sql_s, ex_log.error("sql err:", res.err, sql_s)
+        return res.err .. sql, ex_log.error("sql err:", res.err, sql)
     end
     return NO_ERR, res[1]["count(*)"]
 end
@@ -294,8 +304,8 @@ function CMD.insert(tname, data, exc)
     local tk = {}
     local tv = {}
     for k, v in pairs(data) do
-        table.insert(tk, string.format("`%s`", k))
-        table.insert(tv, string.format("'%s'", v))
+        table.insert(tk, string.format("`%s`", TS(k)))
+        table.insert(tv, QS(v))
     end
     local t = {
         "INSERT INTO",
@@ -320,7 +330,7 @@ function CMD.replace(tname, data, exc)
     local tv = {}
     for k, v in pairs(data) do
         table.insert(tk, string.format("`%s`", k))
-        table.insert(tv, string.format("'%s'", v))
+        table.insert(tv, QS(v))
     end
     local t = {
         "REPLACE INTO",
@@ -343,8 +353,8 @@ end
 function CMD.update(tname, fields, where, exc)
     local values = {}
     for k, v in pairs(fields) do
-        table.insert(values, string.format("%s=%s", k, tostring(v)))
-    end    
+        table.insert(values, string.format("%s=%s", TS(k), QS(v)))
+    end
 
     local sql = {
         "UPDATE",
@@ -357,40 +367,45 @@ function CMD.update(tname, fields, where, exc)
         table.insert(sql, "WHERE")
         for _, v in ipairs(where) do
             if type(v) == "table" then
-                table.insert(sql, string.format("%s\"%s\"", v[1], tostring(v[2])))
+                table.insert(sql, string.format("%s%s", TS(v[1]), QS(v[2])))
             else
-                table.insert(sql, tostring(v))
+                table.insert(sql, TS(v))
             end
         end
     end
     if exc then
-        table.insert(sql, exc)
+        table.insert(sql, TS(exc))
     end
-    local sql_s = table.concat(sql, " ")
-    local res = _db:query(sql_s)
+    local sql = table.concat(sql, " ")
+    local res = _db:query(sql)
     if res.err then
-        return res.err .. sql_s, ex_log.error("sql err:", res.err, sql_s)
+        return res.err .. sql, ex_log.error("sql err:", res.err, sql)
     end
     return NO_ERR, res
 end
 
-function CMD.delete(tname, where)
+function CMD.delete(tname, where, exc)
     local sql = {
         "DELETE FROM",
         tname
     }
     if where and next(where) then
         table.insert(sql, "WHERE")
-        local w = {}
-        for k, v in pairs(where) do
-            table.insert(w, string.format("%s \"%s\"", k, tostring(v)))
+        for _, v in ipairs(where) do
+            if type(v) == "table" then
+                table.insert(sql, string.format("%s%s", TS(v[1]), QS(v[2])))
+            else
+                table.insert(sql, TS(v))
+            end
         end
-        table.insert(sql, table.concat(w, " and "))
     end
-    local sql_s = table.concat(sql, " ")
-    local res = _db:query(sql_s)
+    if exc then
+        table.insert(sql, TS(exc))
+    end
+    local sql = table.concat(sql, " ")
+    local res = _db:query(sql)
     if res.err then
-        return res.err, ex_log.error("sql err:", res.err, sql_s)
+        return res.err, ex_log.error("sql err:", res.err, sql)
     end
     return NO_ERR, res
 end

@@ -2,6 +2,9 @@
 -- auth:diandian
 -- date:2018/03/28
 
+local skynet = require "skynet"
+local ex_log = require "ex_log"
+
 local rawget, rawset, setmetatable = rawget, rawset, setmetatable
 local pairs, ipairs, type = pairs, ipairs, type
 
@@ -16,6 +19,9 @@ mt.__call = function(self, player, top, parent, name)
     t.events__ = {}
     t.parent__ = parent
     t.top__ = top or t
+
+    t.mod_inited__ = {}
+    t.mod_inited_co__ = {}
     setmetatable(t, self)
     return t, t:initalize__(player)
 end
@@ -32,21 +38,36 @@ return function(class)
     function class:initalize__(player)
         local fn = rawget(class, "init")
         if fn then
-            return fn(self, player)
+            fn(self, player)
         end
-        return false
+        if self.player__.day_changed then
+            m:day_change()
+        end
     end
+
 
     function class:get_child(name)
         local m = self.mods__[name]
         if not m then
             local c = modclass[name]
             assert(c, name)
-            m = c(self.player__, self.top__, self, name)
-            if self.player__.day_changed then
-                m:day_change()
+            if self.mod_inited__[name] then
+                local co = coroutine.running()
+                table.insert(self.mod_inited_co__, co)
+                skynet.wait()
+                return self.mods__[name]
             end
+            self.mod_inited__[name] = true
+            m = c(self.player__, self.top__, self, name)
             self.mods__[name] = m
+
+            skynet.fork(function()
+                for i, v in ipairs(self.mod_inited_co__) do
+                    skynet.wakeup(v)
+                end
+                self.mod_inited_co__ = {}
+                self.mod_inited__ = {}
+            end)
         end
         return m
     end
@@ -121,7 +142,7 @@ return function(class)
             return
         end
         if self.save_flag_ then
-            local ret = xpcall(fn, ERROR, self, self.player__)
+            local ret = xpcall(fn, ex_log.error, self, self.player__)
             if ret then
                 self.save_flag_ = false
             else
@@ -131,7 +152,7 @@ return function(class)
         if next(self.save_flag_map_) then
             local saved = {}
             for k, _ in pairs(self.save_flag_map_) do
-                local ret = xpcall(fn, ERROR, elf, self.player__)
+                local ret = xpcall(fn, ex_log.error, self, self.player__, k)
                 if ret then
                     table.insert(saved, k)
                 end
@@ -149,7 +170,7 @@ return function(class)
     function class:day_change()
         local fn = rawget(class, "on_day_change")
         if fn then
-            xpcall(fn, ERROR, self, self.player__)
+            xpcall(fn, ex_log.error, self, self.player__)
         end
         for k, v in pairs(self.mods__) do
             v:day_change()

@@ -45,6 +45,8 @@ function start(){
         release)
             make_conf
             $SKYNET_EXTEND/skynet/skynet $CONF_TEMP
+			sleep 1
+			echo $CONFIG start with pid $(cat $PID_FILE)
             rm $CONF_TEMP
             ;;
         debug)
@@ -58,9 +60,8 @@ function start(){
 }
 
 function stop(){
-  echo $PID_FILE
   if [ ! -f $PID_FILE ] ;then
-    echo "not found pid file have no gameserver"
+    echo "not found pid file $PID_FILE"
     exit 0
   fi
 
@@ -83,6 +84,11 @@ case "$CMD" in
   stop)
     stop
     ;;
+  restart)
+	stop
+	MODE=release
+	start
+	;;
   *)
     exit 2
 esac
