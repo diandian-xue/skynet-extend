@@ -3,7 +3,7 @@
 -- date:2017/6/26
 
 local skynet = require 'skynet.manager'
-local socket = require "socket"
+local socket = require "skynet.socket"
 
 local CMD = {}
 

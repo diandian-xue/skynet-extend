@@ -1,9 +1,9 @@
 local skynet = require 'skynet.manager'
-local socket = require "socket"
+local socket = require "skynet.socket"
 local httpd        = require "http.httpd"
 local sockethelper = require "http.sockethelper"
 local cjson = require "cjson"
-local cluster = require "cluster"
+local cluster = require "skynet.cluster"
 
 
 local CMD = {}
