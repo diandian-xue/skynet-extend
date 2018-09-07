@@ -55,19 +55,20 @@ return function(class)
                 local co = coroutine.running()
                 table.insert(self.mod_inited_co__, co)
                 skynet.wait()
+                assert(self.mods__[name], name)
                 return self.mods__[name]
             end
             self.mod_inited__[name] = true
             m = c(self.player__, self.top__, self, name)
+            assert(m, name)
             self.mods__[name] = m
-
-            skynet.fork(function()
-                for i, v in ipairs(self.mod_inited_co__) do
+            for i, v in ipairs(self.mod_inited_co__) do
+                skynet.fork(function()
                     skynet.wakeup(v)
-                end
-                self.mod_inited_co__ = {}
-                self.mod_inited__ = {}
-            end)
+                end)
+            end
+            self.mod_inited_co__ = {}
+            self.mod_inited__ = {}
         end
         return m
     end
@@ -102,6 +103,10 @@ return function(class)
             end
         end
         return m
+    end
+
+    function class:get_parent()
+        return self.parent__
     end
 
     function class:save(flag)

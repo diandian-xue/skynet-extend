@@ -43,7 +43,7 @@ luaclib/protobuf.so:: luaclib-src/pbc/src/* luaclib-src/pbc/tool/* luaclib-src/p
 	cp -r luaclib-src/pbc/binding/lua53/protobuf.lua lualib/
 
 cservice/ex_loggersvr.so: cservice-src/ex_loggersvr/ex_loggersvr.c
-	$(CC)  $(CFLAGS)  -I$(INCLUDE) $^ -o $@
+	$(CC)  $(CFLAGS)  $(INCLUDE) $^ -o $@
 
 
 clean:

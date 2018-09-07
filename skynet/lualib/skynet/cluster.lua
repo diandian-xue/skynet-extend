@@ -9,6 +9,7 @@ function cluster.call(node, address, ...)
 end
 
 function cluster.send(node, address, ...)
+    assert(node)
 	-- push is the same with req, but no response
 	skynet.send(clusterd, "lua", "push", node, address, skynet.pack(...))
 end

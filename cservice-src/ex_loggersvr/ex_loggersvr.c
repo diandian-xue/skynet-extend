@@ -12,6 +12,11 @@
 #include <sys/time.h>
 #include <assert.h>
 #include <libgen.h>
+
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
+
 // 日志文件大小限制
 #define LOG_MAX_SIZE 400*1024*1024
 #define LOG_DATE_CHECK "500" //5秒检测一次日期
@@ -139,3 +144,28 @@ ex_loggersvr_init(struct ex_loggersvr * inst, struct skynet_context *ctx, const 
     return 0;
 }
 
+static lua_Integer g_level = 1;
+
+static int
+l_set_level(lua_State * L){
+    g_level = luaL_checkinteger(L, 1);
+    return 0;
+}
+
+static int
+l_get_level(lua_State * L){
+    lua_pushinteger(L, g_level);
+    return 1;
+}
+
+static luaL_Reg REG[] = {
+    { "set_level", l_set_level },
+    { "get_level", l_get_level },
+    { NULL, NULL },
+};
+
+int
+luaopen_ex_loggersvr_c(lua_State * L){
+    luaL_newlib(L, REG);
+    return 1;
+}

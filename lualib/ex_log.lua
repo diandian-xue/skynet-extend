@@ -13,6 +13,11 @@ M.LEVEL_FATAL = 6
 local _LEVEL = 0
 local _ERROR_TRACEBACK = true
 
+skynet.init(function()
+    local c = require "ex_loggersvr.c"
+    _LEVEL = c.get_level()
+end)
+
 local function color_str(color, ...)
     local t = {color, level}
     local args = table.pack(...)
@@ -78,12 +83,12 @@ end
 
 function M.set_level(level)
     _LEVEL = level or 0
+    local c = require "ex_loggersvr.c"
+    c.set_level(_LEVEL)
 end
 
 function M.is_logger(level)
     return _LEVEL <= level
 end
-
-M.set_level(M.LEVEL_DEBUG)
 
 return M

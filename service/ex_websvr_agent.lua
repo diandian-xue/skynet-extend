@@ -104,6 +104,9 @@ function CMD.attach(fd, addr)
                         header["Set-Cookie"] = value
                     end
                 end,
+                clear_cookie = function(self)
+                    self.cookies = {}
+                end,
             }
 
             local check_code, err = _execute.check_request(request)

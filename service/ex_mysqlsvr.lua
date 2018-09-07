@@ -414,7 +414,7 @@ function CMD.connect(config_, dbname_)
     local config = {
         host = config_.host or "127.0.0.1",
         port = config_.port or 3306,
-        user = config_.root or "root",
+        user = config_.user or "root",
         password = config_.password or "",
         database = dbname_,
         on_connect = function(db_)
